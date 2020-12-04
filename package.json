@@ -1,21 +1,27 @@
 {
   "name": "project3",
   "version": "0.1.0",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/react": "^11.2.2",
     "@testing-library/user-event": "^12.5.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "lodash": "^4.17.20",
+    "react": "16.12.0",
+    "react-dom": "16.12.0",
+    "react-graph-vis": "^1.0.5",
     "react-scripts": "4.0.1",
+    "run-func": "^1.0.5",
+    "uuidv4": "^6.2.5",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "testz": "react-scripts test",
+    "eject": "react-scripts eject",
+    "test": "run-func src/utils/common.js runTests"
   },
   "eslintConfig": {
     "extends": [
