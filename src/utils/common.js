@@ -143,8 +143,14 @@ const consolidate = (dpv1, dpv2) => {
 
 // return a random element from the array of nodes (move_options)
 const move = (move_options) => {
-  return move_options[Math.floor(Math.random() * move_options.length)]
+  var randIndex = Math.floor(Math.random() * move_options.length);
+  var dpvChoice = move_options[randIndex];
+  return {
+    Index: randIndex,
+    DPV: dpvChoice
+  }
 }
+
 
 const testMoveAll = () => {
   let dpv = {

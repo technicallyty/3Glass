@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Graph from "react-graph-vis";
 import cloneDeep from "lodash/cloneDeep";
 import { v4 as uuidv4 } from "uuid";
-import {moveAll, moveToLimit, consolidate, move, DPVToString} from './utils/common.js';
+import {moveAll, moveToLimit, consolidate, move, DPVToString } from './utils/common.js';
 
 const startingDPV = {
   D: 0,
@@ -12,7 +12,7 @@ const startingDPV = {
 
 const graph = {
   nodes: [
-    { id: 1, label: DPVToString(startingDPV), DPV: startingDPV, color: 'red'},
+    { id: 1, label: DPVToString(startingDPV), DPV: startingDPV, color: 'orange'},
   ],
   edges: [
 
@@ -28,6 +28,13 @@ edges: [
 
 export default function App() {
   const [graphData, setGraphData] = useState(graph);
+  const graphDataRef = useRef(graphData);
+  graphDataRef.current = graphData;
+
+  const [currentNode, setCurrentNode] = useState(0);
+  const currentNodeRef = useRef(currentNode);
+  currentNodeRef.current = currentNode;
+
   const options = {
     layout: {
       hierarchical: true
@@ -39,7 +46,7 @@ export default function App() {
   };
 
   const generateRandomNode = e => {
-    let newGraph = cloneDeep(graphData);
+    let newGraph = cloneDeep(graphDataRef.current);
 
     const newNodeId = Math.max(...newGraph.nodes.map(d => d.id)) + 1;
     const newNode = {
@@ -62,36 +69,86 @@ export default function App() {
     setGraphData(newGraph);
   };
 
-  useEffect( () => {
-    var node = graphData.nodes[0];
-    console.log("hello world!");
-    
-    setInterval( () => {
-      var connections = consolidate(moveAll(node.DPV), moveToLimit(node.DPV));
-      console.log(connections);
-      var nextMove = move(connections);
-      let newGraph = cloneDeep(graphData);
+  const Run = () => {
+    var Runner = setInterval( () => {
+      //  get the current node
+      var currNode = graphDataRef.current.nodes[currentNodeRef.current];
+
+      //  check if we are at the balloon juice thing
+      if (currNode.DPV.D === 3 && currNode.DPV.P === 13 && currNode.DPV.V === 3) {
+        console.log("DONE");
+        clearInterval(Runner);
+      }
+
+      //  copy the state
+      let newGraph = cloneDeep(graphDataRef.current);
+
+      var currentDPV = currNode.DPV;
+      var possibleMoves = consolidate(moveAll(currentDPV), moveToLimit(currentDPV));
+      var pick =  move(possibleMoves);
+
+      var nextNodeDPV = pick.DPV;
+      var nextNodeIndex = pick.Index;
+
+      var set = false;
+      for (var i in newGraph.nodes) {
+        var current = newGraph.nodes[i];
+        // check if node already exists in the network. 
+        if(current.D === nextNodeDPV.D && current.P === nextNodeDPV.P && current.V === nextNodeDPV.V) {
+          current.color = "orange";
+          set = true;
+          setCurrentNode(i);
+        }
+        current.color = "pink";
+      }
+
+      if (set) {
+        setGraphData(newGraph);
+        return;
+      }
       
-      for (var i in connections) {
-        const newNodeID = Math.max(...newGraph.nodes.map(d => d.id)) + 1;
+      
+      // now possible moves has all but the next node we want to move to.
+      possibleMoves.splice(nextNodeIndex, 1);
+
+      for (let i in possibleMoves) {
+        const newNodeId = Math.max(...newGraph.nodes.map(d => d.id)) + 1;
         const newNode = {
-          id: newNodeID,
-          label: DPVToString(connections[i]),
-          DPV: connections[i],
-          color: "red"
+          id: newNodeId,
+          label: DPVToString(possibleMoves[i]),
+          DPV: possibleMoves[i],
+          color: "pink"
         }
         const newEdge = {
-          from: node.id,
-          to: newNodeID
+          from: currNode.id,
+          to: newNodeId
         }
+
         newGraph.nodes.push(newNode);
         newGraph.edges.push(newEdge);
-        if(connections[i] === nextMove) {
-          node = newNode;
-        }
       }
+
+      const newNodeId = Math.max(...newGraph.nodes.map(d => d.id)) + 1;
+      const newNode = {
+        id: newNodeId,
+        label: DPVToString(nextNodeDPV),
+        DPV: nextNodeDPV,
+        color: "orange"
+      }
+      const newEdge = {
+        from: currNode.id,
+        to: newNodeId
+      }
+
+      var newIdx = newGraph.nodes.push(newNode) - 1;
+      newGraph.edges.push(newEdge);
       setGraphData(newGraph);
-    }, 3000)
+      setCurrentNode(newIdx);
+    }, 5000)
+  }
+
+  useEffect( () => {
+    Run();
   }, [])
 
   return (
